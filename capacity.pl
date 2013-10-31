@@ -133,7 +133,7 @@ open(my $fh, "<", $HOSTFILE)
 						push(@flist,$outputFname);
 					}else{
 						logger ($line.$ret);
-						push (@text,$ret."\r\n");
+						push (@text,$ret."\r\n\r\n");
 
 					}
 				}
@@ -363,7 +363,7 @@ sub getAuditTodayLog{
 	close(IN);
 	close(OUT);
 	if ($flg == 0 ){
-		return "   \"$audit->{auditlognameout}\"より対象のログが取得できませんでした。　直前に系切り替えが発生した恐れがあります。";
+		return "   何らかの原因により\"$audit->{auditlognameout}\"ログが取得できませんでした。";
 	}
 	
 	#出力終わったら一時ファイルを消す
