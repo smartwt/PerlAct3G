@@ -16,23 +16,23 @@ my $mail_to =
 my @mailAddressArray = split(/,/,$mail_to);
 
 # メール送信に使うSMTPサーバーと、ポート番号、送信者のドメインを設定する。
-my $smtp_server = 'smtp';
-my $smtp_port = '25';
-my $smtp_helo = 'actwatch.com';
+my $smtp_server = '';
+my $smtp_port = '';
+my $smtp_helo = '';
 
-# 送信者の名前とメールアドレス
+# 送信者の名前とメールアドレスと表題
 my $mail_from_name = 'ACTWATCH3G 日次チェック';
-#my $mail_from = 'mp1@ab.actwatch.net';
-my $mail_from = '192.168.41.214';
+#my $mail_from = '';
+my $mail_from = '';
 
 
 # メールタイトル
-my $subject = 'Check Result';
+my $subject = '【レポート】Check Result';
 
 
-my $HOSTFILE="hostlist";
-my $ACCOUNT="swing";
-my $PASSWORD="swinguser";
+my $HOSTFILE="";
+my $ACCOUNT="";
+my $PASSWORD="";
 
 my $SYSSWITCH_COMM ="sudo /home/swing/sysswitchctl";
 my $CAPACITYCTL_COMM ="sudo /home/swing/capacityctl";
@@ -213,7 +213,7 @@ sub mailSend{
 	$smtp->datasend("$from");
 	$smtp->datasend("$to");
 	# $smtp->datasend("Cc:$cc\n");
-	$smtp->datasend("Subject: ".encode('MIME-Header',"【レポート】".$subject)."\n");
+	$smtp->datasend("Subject: ".encode('MIME-Header',.$subject)."\n");
 	$smtp->datasend("--$bound\n");
 	$smtp->datasend("Content-Type: text/plain; charset=\"UTF-8\"\n\n");
 	#本文
