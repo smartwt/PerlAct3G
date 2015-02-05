@@ -1,10 +1,11 @@
-﻿#!/usr/bin/perl -w
+#!/usr/bin/perl -w
 use strict;
 use warnings;
 use NET::SMTP;
 use utf8;
 use Encode;
 use MIME::Base64;
+<<<<<<< HEAD
 use File::Basename;
 
 require "./lib/mimew.pl";
@@ -34,54 +35,42 @@ my $HOSTFILE="";
 my $ACCOUNT="";
 my $PASSWORD="";
 
+=======
+
+
+my $HOSTFILE="hostlist";
+my $ACCOUNT="swing";
+my $PASSWORD="swinguser";
+>>>>>>> parent of 28320b6... 暫定
 my $SYSSWITCH_COMM ="sudo /home/swing/sysswitchctl";
-my $CAPACITYCTL_COMM ="sudo /home/swing/capacityctl";
-#バックアップファイル数の取得
-my $BACKUPCHKCOMM = "ls -1  /usr/local/SWing/backup/system";
-my $AUDIT_LOG ="cat /usr/local/SWing/audit/swing_auto_audit.log > ";
 
-my @text = ();
-my @tmptext = ();
-my @flist = ();
+my $CAPACITYCTL_COMM ="sudo /home/swing/capacityctl ";
 
-open(my $fh, "<", $HOSTFILE)
-  or die logger("Cannot open $HOSTFILE: $! \n");
-  
-	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);  
-	my $yyyymmdd = sprintf("%04d%02d%02d", $year + 1900, $mon + 1, $mday);  
-	
+
+# 読み込みたいファイル名
+my $file = $HOSTFILE; 
+
+open(my $fh, "<", $file)
+  or die "Cannot open $file: $!";
 	# readline関数で、一行読み込む。
 	while(my $line = readline $fh){ 
 		# chomp関数で、改行を取り除く
 		chomp $line;
 		
-		#コメント　空文字は次へ
-		if ($line =~ /^#/ or $line eq ''){
-			next;
-		}
-		$line = trim($line);
+		# $line に対して何らかの処理。
 		# 標準出力へ書き出し。
-		print $line;
-		push (@text,"■ $line \r\n");
-
+		print $line, "\n";
+		
 		my $task = "lib\\Plink.exe -pw $PASSWORD -l $ACCOUNT $line $SYSSWITCH_COMM";
-		my $shstlist = qx ($task);
-		if($?){
-			logger ($line." Command Error \"$SYSSWITCH_COMM\" $!");
-			push (@text," Command Error \"$SYSSWITCH_COMM\" $! \r\n");
-		}
 
+		my $shstlist = qx ($task) or die "Unable to open SYSSWITCHCTL \n";
 		#chomp @shstlist;
-		print $shstlist;
+		print "$shstlist";
+		
 		#現用系の時のみ
 		if ($shstlist =~/ACT/){
-	
-			#バックアップ数の取得
-			@tmptext = &backupchk($line);
-			unshift (@tmptext,"【ACT】 バックアップ確認 "."\r\n");
-			push(@tmptext,"\n");
-			push (@text,@tmptext);
 			
+<<<<<<< HEAD
 	
 			#現用統合サーバのみCAPACITYCTL auditlog
 			if( $line eq "pesis11" or $line eq "pesis12" or $line eq "192.168.22.1" or $line eq "192.168.22.2"){
@@ -139,61 +128,50 @@ open(my $fh, "<", $HOSTFILE)
 			}
 		}
 		elsif ($shstlist =~/SBY/){
+=======
+			#$task = "lib\\Plink.exe -pw $PASSWORD -l $ACCOUNT $line $CAPACITYCTL_COMM > $line"."_CAPACITYCTL.txt";
+			$task = "lib\\Plink.exe -pw $PASSWORD -l $ACCOUNT $line $CAPACITYCTL_COMM ";
+>>>>>>> parent of 28320b6... 暫定
 
-			#バックアップ数の取得
-			@tmptext = &backupchk($line);
-			unshift(@tmptext,"【SBY】 バックアップ確認 "."\r\n");
-			push(@tmptext,"\r\n");
-			push (@text,@tmptext);
+			my @shstlista = qx ($task) or die "Unable to open CAPACITYCTL \n";
+			&mailSend($line,@shstlista);
+			#print "@shstlista";
 
 		}
+
 		# ファイルがEOF( END OF FILE ) に到達するまで1行読みこみを繰り返す。
 	}
-	#メールの送信
-	&mailSend(\@flist,\@text);
-	
-	#一時ファイルの削除
-	for( my $c=0; $c <= $#flist; $c++){
-		unlink $flist[$c];
-	}
+
 close $fh;
 
-
 sub mailSend{
+	my ($host,@text) = @_;
+	# メール送信に使うSMTPサーバーと、ポート番号、送信者のドメインを設定する。
+	my $smtp_server = 'smtp';
+	my $smtp_port = '25';
+	my $smtp_helo = 'actwatch.com';
 
-	# バウンダリ
-	my $bound = 'wq5se3d1ew';
+	# 送信者の名前とメールアドレスを設定する。
+	my $mail_from_name = 'ACTWATCH3G';
+	my $mail_from = 'mp1@ab.actwatch.net';
 
-	my ($filelist,$textad) = @_;
-	my @flist = @{$filelist};
-	my @text = @{$textad};
-	
-	
-	# 添付ファイルをBase64エンコードする
-	my $base64_data;
-	my @base64_data_array;
-		
-	for( my $i=0; $i <= $#flist; $i++){
-		
-		if ( $flist[$i] ){
-			if(!open FF,$flist[$i]){
-				logger ("Cannot Open $flist[$i] \n");
-				unshift (@text,"Cannot Open $flist[$i]"."\r\n\r\n");
-			}else{
-				
-				$base64_data = join('',<FF>);
-				close(FF);
-				$base64_data = &bodyencode($base64_data,"b64");
-				$base64_data .= &benflush("b64");
-				push(@base64_data_array,$base64_data);
-			}
-		}
-	}
+	# 宛先の宛名とメールアドレスを設定する。
+	my $mail_to_name = 'ACTWATCHC3G';
+	my $mail_to = 'y-satou@z6.nesic.com';
+
+	# メールの件名を設定する。
+	my $subject = 'Capacityctl_[ACT]'.$host;
+
+	# メールヘッダを作成する。
+	# from、to、件名共にMIME-Header(UTF-8)へエンコードします。
+	my $mail_header;
+
 	# 送信者名、送信者のメールアドレスを、
 	# From: 送信者名 <送信者メールアドレス> 形式へ変換する。
-	my $from = make_name_addr('From:',$mail_from_name,$mail_from);
+	$mail_header = make_name_addr('From:',$mail_from_name,$mail_from);
 
 	# 宛名、宛先のメールアドレスを、
+<<<<<<< HEAD
 	#my $to = make_name_addr('To:',$mail_to_name,$mail_to);
 	my $to = "To: ".trim($mail_to)."\n";
 
@@ -234,6 +212,34 @@ sub mailSend{
 	$smtp->dataend();
 	#SMTP接続の終了
 	$smtp->quit;
+=======
+	# To: 宛名 <宛先メールアドレス> 形式へ変換する。
+	$mail_header .= make_name_addr('To:',$mail_to_name,$mail_to);
+
+	# 件名をMIMEエンコードする。
+	$mail_header .= 'Subject: '.encode('MIME-Header',$subject)."\n";
+
+	# UTF-8とbase64エンコードを使う事を明記します。
+	$mail_header .= "MIME-Version: 1.0\n";
+	$mail_header .= "Content-type: text/plain; charset=UTF-8\n";
+	$mail_header .= "Content-Transfer-Encoding: base64\n";
+
+	# メールヘッダの終わり。(これ以降は本文となります。)
+	$mail_header .= "\n";
+
+	# SMTPでメールを送る。
+	my $SMTP=Net::SMTP->new($smtp_server,Port=>$smtp_port,Hello=>$smtp_helo);
+	if (!$SMTP) { die "Error : Can not connect to mail server.\n"; }
+	$SMTP->mail($mail_from);
+	$SMTP->to($mail_to);
+	$SMTP->data();
+	$SMTP->datasend($mail_header);
+	$SMTP->datasend(encode_base64(encode('utf8',join('',@text))));
+	$SMTP->dataend();
+	$SMTP->quit;
+
+	exit;
+>>>>>>> parent of 28320b6... 暫定
 }
 
 # 名前とメールアドレスから、name_addr形式のフォーマットを作るサブルーチン。
@@ -245,47 +251,19 @@ sub make_name_addr {
 
 	# 名前(送信者名または宛名)が設定されているか調べる。
 	if ($mail_name ne "") {
-		# 名前が設定されていたら、
-		# 名前をMIMEエンコードして、末尾にスペースを追加する。
-		$name_addr .= encode('MIME-Header',$mail_name).' ';
+	# 名前が設定されていたら、
+	# 名前をMIMEエンコードして、末尾にスペースを追加する。
+	$name_addr .= encode('MIME-Header',$mail_name).' ';
 	}
 	# メールアドレスを追加する。
 	return ($name_addr .= '<'.$mail_address.">\n");
 }
-sub date { 
-	$ENV{'TZ'} = "JST-9";
-	my ($sec,$min,$hour,$mday,$mon,$year,$wday) = localtime(time);
-	my @week = ('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
-	my @month = ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'); 
-	my $d = sprintf("%s, %d %s %04d %02d:%02d:%02d +0900 (JST)", $week[$wday],$mday,$month[$mon],$year+1900,$hour,$min,$sec);
-	return $d;
-}
-sub trim {
-	my $val = shift;
-	$val =~ s/^ *(.*?) *$/$1/;
-	return $val;
-}
 
 
-#バックアップファイル数の取得
-sub backupchk{
-	my $host = shift;
 	
-	#/usr/local/SWing/backup/system
-	my $task = "lib\\Plink.exe -pw $PASSWORD -l $ACCOUNT $host $BACKUPCHKCOMM" ;
-
-	my @shstlist = qx ($task);
-	if($?){
-		logger ($host." BackUp Directory Get Error \"$BACKUPCHKCOMM\" $!");
-		push (@shstlist,"   BackUp Directory Get Error \"$BACKUPCHKCOMM\"");
-	}
 	
-	#スペースを入れて字下げする
-	my @arr = map{ "   ". $_ } @shstlist;
-	
-	return @arr;
-}
 
+<<<<<<< HEAD
 #AuditLogの取得
 package Class_AuditLog;
 use utf8;
@@ -369,3 +347,10 @@ sub getAuditTodayLog{
 	unlink $audit->{auditlognamein};
 	return $ret;
 }
+=======
+
+
+
+
+
+>>>>>>> parent of 28320b6... 暫定

@@ -16,8 +16,8 @@ my $ACCOUNT = "swing";
 my $PASSWORD ="swinguser"; 
 
 # 宛先の宛名とメールアドレスを設定する。
-#my $mail_to = 's-matsumoto@dn.jp.nec.com, ueda-kouji@sa.nesic.com,k-shiraishi@sa.nesic.com,y-satou@z6.nesic.com';
-my $mail_to = 'y-satou@z6.nesic.com';
+#my $mail_to = '';
+my $mail_to = '';
 #複数送信の時は配列に格納
 my @mailAddressArray = split(/,/,$mail_to);
 
