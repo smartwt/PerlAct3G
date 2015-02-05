@@ -8,8 +8,6 @@ use MIME::Base64;
 use File::Basename;
 
 
-
-
 require "./lib/mimew.pl";
 require "./lib/logger.pl";
 
